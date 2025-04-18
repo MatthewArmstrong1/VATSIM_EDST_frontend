@@ -12,7 +12,7 @@ import {
   setGpdCenter,
   setGpdZoomLevel,
 } from "~redux/slices/gpdSlice";
-import { useArtccBoundaries } from "api/gpdApi";
+import { useArtccBoundaries, useMapFeatures } from "api/gpdApi";
 import gpdStyles from "css/gpd.module.scss";
 import * as d3 from "d3";
 import { useResizeDetector } from "react-resize-detector";
@@ -37,6 +37,7 @@ export const GpdBody = () => {
   const initialCenter = useRootSelector(gpdCenterSelector);
   const zoomLevel = useRootSelector(gpdZoomLevelSelector);
   const { data: artccBoundaries, isSuccess } = useArtccBoundaries();
+  const { data: mapFeature, isSuccess: mapFeatureSuccess } = useMapFeatures("UL");
   const [showRouteLines, setShowRouteLines] = React.useState<AircraftId[]>([]);
   const [center, setCenter] = React.useState<Coordinate>(initialCenter);
   const anyDragging = useRootSelector(anyDraggingSelector);
@@ -95,6 +96,13 @@ export const GpdBody = () => {
           <g>
             {isSuccess &&
               artccBoundaries.features.map((shape, index) => {
+                return (
+                  // eslint-disable-next-line react/no-array-index-key
+                  <path key={index} d={pathGenerator(shape) ?? undefined} fill="none" stroke="#adadad" />
+                );
+              })}
+            {mapFeatureSuccess &&
+              mapFeature.features.map((shape, index) => {
                 return (
                   // eslint-disable-next-line react/no-array-index-key
                   <path key={index} d={pathGenerator(shape) ?? undefined} fill="none" stroke="#adadad" />

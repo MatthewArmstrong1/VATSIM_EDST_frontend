@@ -211,9 +211,6 @@ export const HubContextProvider = ({ children }: { children: ReactNode }) => {
           const primarySession = sessions?.find((s) => !s.isPseudoController);
           const eramConfig = primarySession?.positions.find((p) => p.isPrimary)?.position.eramConfiguration;
 
-          console.log(sessions);
-          console.log(primarySession);
-
           if (primarySession && eramConfig) {
             await hubConnection.invoke<void>("joinSession", {
               sessionId: primarySession.id,

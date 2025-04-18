@@ -20,11 +20,32 @@ export const gpdApi = createApi({
         return { data };
       },
     }),
+    getMapFeature: builder.query<FeatureCollection, string>({
+      queryFn: async (featureId, { getState }) => {
+        const videoMapBaseURL = (getState() as any).auth.vnasConfiguration.videoMapBaseUrl;
+        const apiURL = (getState() as any).auth.vnasConfiguration.dataApiBaseUrl;
+        console.log(featureId);
+        const objectQuery = await fetch(`${apiURL}/artccs/ZSE`);
+        const artccObject = await objectQuery.json();
+        const featureQuery = await fetch(`${videoMapBaseURL}/ZSE/${artccObject.videoMaps[501].id}.geojson`);
+        console.log(featureQuery);
+        if (!featureQuery.ok) {
+          throw new Error("could not fetch ARTCC boundaries");
+        }
+        const data = await featureQuery.json();
+        console.log(data);
+        return { data };
+      },
+    }),
   }),
 });
 
-const { useGetArtccBoundariesQuery } = gpdApi;
+const { useGetArtccBoundariesQuery, useGetMapFeatureQuery } = gpdApi;
 
 export const useArtccBoundaries = () => {
   return useGetArtccBoundariesQuery({});
+};
+
+export const useMapFeatures = (featureId: string) => {
+  return useGetMapFeatureQuery(featureId);
 };
