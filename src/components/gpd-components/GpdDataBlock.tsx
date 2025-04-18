@@ -134,6 +134,8 @@ export const GpdDataBlock = React.memo(({ aircraftId, offset, setOffset, toggleS
     </div>
   );
 
+  console.log(track)
+
   return track ? (
     <>
       {dragPreviewStyle && <EdstDraggingOutline style={dragPreviewStyle} />}

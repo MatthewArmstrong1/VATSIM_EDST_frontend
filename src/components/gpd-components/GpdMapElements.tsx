@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useBoolean } from "usehooks-ts";
 import type { Nullable } from "types/utility-types";
 import { entrySelector } from "~redux/slices/entrySlice";
-import { aircraftTrackSelector } from "~redux/slices/trackSlice";
+import { aircraftTrackSelector, aircraftTracksSelector } from "~redux/slices/trackSlice";
 import { useRouteFixes } from "api/aircraftApi";
 import { locationToPosition } from "~/utils/locationToPosition";
 import { getRemainingFixesFromPpos } from "~/utils/fixes";
@@ -14,6 +14,7 @@ import * as d3 from "d3";
 import type { Feature } from "geojson";
 import type { LineString, Position } from "@turf/turf";
 import type { AircraftId } from "types/aircraftId";
+import { E } from "@tauri-apps/api/path-e12e0e34";
 
 function createLineString<T extends { pos: Position }>(fixes: T[]): Feature<LineString> {
   return {
@@ -56,6 +57,9 @@ export const GpdAircraftTrack = ({ aircraftId, toggleRouteLine }: GpdAircraftTra
   const [datablockOffset, setDatablockOffset] = useState({ x: 24, y: -30 });
 
   const iconPos = track ? projection([+track.location.lon, +track.location.lat]) : null;
+
+  console.log(useRootSelector((state) => aircraftTracksSelector(state)));
+  console.log(track);
 
   return iconPos ? (
     <div

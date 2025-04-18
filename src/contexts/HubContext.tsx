@@ -28,6 +28,7 @@ import { useSocketConnector } from "hooks/useSocketConnector";
 import { VERSION } from "~/utils/constants";
 import { OutageEntry } from "types/outageEntry";
 import { HubConnectionState } from "@microsoft/signalr/src/HubConnection";
+import { updateAircraftTrackThunk } from "~redux/thunks/updateAircraftTrackThunk";
 
 type HubContextValue = {
   connectHub: () => Promise<void>;
@@ -154,9 +155,9 @@ export const HubContextProvider = ({ children }: { children: ReactNode }) => {
     });
     hubConnection.on("receiveAircraft", (aircraft: ApiAircraftTrack[]) => {
       console.log("received aircraft:", aircraft);
-      // aircraft.forEach(t => {
-      //   dispatch(updateAircraftTrackThunk(t));
-      // });
+      aircraft.forEach((t) => {
+        dispatch(updateAircraftTrackThunk(t));
+      });
     });
     hubConnection.on("handleFsdConnectionStateChanged", (state: boolean) => {
       dispatch(setFsdIsConnected(state));

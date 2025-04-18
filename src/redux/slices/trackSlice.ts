@@ -14,6 +14,7 @@ const trackSlice = createSlice({
   initialState,
   reducers: {
     setTrack(state, action: PayloadAction<AircraftTrack>) {
+      console.log("setTrack", action.payload);
       state[action.payload.aircraftId] = action.payload;
     },
     setTracks(state, action: PayloadAction<Record<AircraftId, AircraftTrack>>) {

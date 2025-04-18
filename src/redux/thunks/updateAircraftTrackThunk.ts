@@ -19,6 +19,7 @@ export function updateAircraftTrackThunk(newAircraftTrack: ApiAircraftTrack): Ro
       // console.log(newAircraftTrack, entry);
       // console.log(polygons, entry);
     }
+    console.log("hi!")
     dispatch(updateEntries(updateData));
   };
 }
