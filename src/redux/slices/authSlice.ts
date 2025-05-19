@@ -132,6 +132,7 @@ export const authSlice = createSlice({
     reducers: {
         setSession(state, action: PayloadAction<ApiSessionInfoDto>) {
             state.session = action.payload;
+            console.log(action.payload);
         },
         clearSession(state) {
             state.session = null;
@@ -151,6 +152,7 @@ export const authSlice = createSlice({
           }
           const active = action.payload;
           state.sessionActive = active;
+          sessionStorage.setItem("session-active", active.toString());
         },
         setHubConnected(state, action: PayloadAction<boolean>) {
           state.hubConnected = action.payload;

@@ -6,13 +6,14 @@ import {
   GPD_MAX_ZOOM,
   GPD_MIN_ZOOM,
   gpdCenterSelector,
+  gpdMapFeatureOptionsSelector,
   gpdPlanDataSelector,
   gpdSuppressedSelector,
   gpdZoomLevelSelector,
   setGpdCenter,
   setGpdZoomLevel,
 } from "~redux/slices/gpdSlice";
-import { useArtccBoundaries, useMapFeatures } from "api/gpdApi";
+import { useArtccBoundaries, useTraconMaps, useEnabledWhiteLines } from "api/gpdApi";
 import gpdStyles from "css/gpd.module.scss";
 import * as d3 from "d3";
 import { useResizeDetector } from "react-resize-detector";
@@ -36,12 +37,16 @@ export const GpdBody = () => {
   const suppressed = useRootSelector(gpdSuppressedSelector);
   const initialCenter = useRootSelector(gpdCenterSelector);
   const zoomLevel = useRootSelector(gpdZoomLevelSelector);
-  const { data: artccBoundaries, isSuccess } = useArtccBoundaries();
-  const { data: mapFeature, isSuccess: mapFeatureSuccess } = useMapFeatures("UL");
   const [showRouteLines, setShowRouteLines] = React.useState<AircraftId[]>([]);
   const [center, setCenter] = React.useState<Coordinate>(initialCenter);
   const anyDragging = useRootSelector(anyDraggingSelector);
   const [dragging, setDragging] = React.useState(false);
+
+  const mapFeatureOptions = useRootSelector((state) => state.gpd.mapFeatureOptions);
+  const optionsKey = JSON.stringify(mapFeatureOptions); // we need to use this to force a re-render of the GPD when the map features selected by the user changes
+  const { data: traconMaps, isSuccess: traconMapsSuccess } = useTraconMaps(optionsKey); // Get the map ID of all enabled map features
+  const { data: whiteLineMaps, isSuccess: whiteLineMapsSuccess } = useEnabledWhiteLines(optionsKey); // Get the map ID of all enabled map features
+  const { data: artccBoundaries, isSuccess } = useArtccBoundaries(optionsKey);
 
   const translate = (width && height ? [width / 2, height / 2] : [0, 0]) as Coordinate;
 
@@ -98,16 +103,23 @@ export const GpdBody = () => {
               artccBoundaries.features.map((shape, index) => {
                 return (
                   // eslint-disable-next-line react/no-array-index-key
-                  <path key={index} d={pathGenerator(shape) ?? undefined} fill="none" stroke="#adadad" />
+                  <path key={index} d={pathGenerator(shape) ?? undefined} fill="none" stroke="#ffffff" strokeWidth={3} />
                 );
               })}
-            {mapFeatureSuccess &&
-              mapFeature.features.map((shape, index) => {
-                return (
+            {traconMapsSuccess &&
+              traconMaps.map((mapFeature, featureIndex) =>
+                mapFeature.features.map((shape, index) => (
                   // eslint-disable-next-line react/no-array-index-key
-                  <path key={index} d={pathGenerator(shape) ?? undefined} fill="none" stroke="#adadad" />
-                );
-              })}
+                  <path key={`${featureIndex}-${index}`} d={pathGenerator(shape) ?? undefined} fill="none" stroke="#6b6b6b" strokeDasharray="5 3" />
+                ))
+              )}
+            {whiteLineMapsSuccess &&
+              whiteLineMaps.map((mapFeature, featureIndex) =>
+                mapFeature.features.map((shape, index) => (
+                  // eslint-disable-next-line react/no-array-index-key
+                  <path key={`${featureIndex}-${index}`} d={pathGenerator(shape) ?? undefined} fill="none" stroke="#ffffff" strokeWidth={0.5} />
+                ))
+              )}
             {showRouteLines.map((aircraftId) => (
               <GpdRouteLine key={aircraftId} aircraftId={aircraftId} />
             ))}

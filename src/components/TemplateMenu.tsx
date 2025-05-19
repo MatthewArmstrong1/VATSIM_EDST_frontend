@@ -156,7 +156,7 @@ export const TemplateMenu = () => {
         </div>
         <div className={clsx(templateStyles.row)}>
           <div className={templateStyles.col}>
-            <EdstButton disabled content="Send" onMouseDown={onSend} />
+            <EdstButton content="Send" onMouseDown={onSend} />
           </div>
           <div className={templateStyles.row} />
           <div className={clsx(templateStyles.col)}>

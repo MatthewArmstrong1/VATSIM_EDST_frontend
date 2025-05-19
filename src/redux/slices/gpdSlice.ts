@@ -67,6 +67,7 @@ export type SharedGpdState = Omit<GpdState, "center" | "zoomLevel">;
 const initialMapFeatureOptionsState = {
   [MapFeatureOption.lowSectors]: true,
   [MapFeatureOption.highSectors]: true,
+  [MapFeatureOption.centerBoundaries]: true,
 };
 
 const initialState: GpdState = {

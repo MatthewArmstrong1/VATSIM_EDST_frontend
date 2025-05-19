@@ -1,6 +1,7 @@
 import _ from "lodash";
 import type { RootThunkAction } from "~redux/store";
 import { updateEntry } from "~redux/slices/entrySlice";
+import { setTrack } from "~redux/slices/trackSlice";
 import { EramTrackDto } from "~/types/apiTypes/EramTrackDto";
 import { sectorIdSelector } from "~/redux/slices/sectorSlice";
 import { LocalVEdstEntry } from "types/localVEdstEntry";
@@ -40,13 +41,16 @@ export function updateTrackThunk(target: EramTrackDto): RootThunkAction {
       }
 
       // Update the entry with new local data
-      dispatch(updateEntry({ 
-        aircraftId: target.aircraftId, 
+      dispatch(updateEntry({
+        aircraftId: target.aircraftId,
         data: {
           ...entries[target.aircraftId],
           ...localData
         }
       }));
+
+      // Update the aircraft track list
+      dispatch(setTrack(target))
     }
   };
 }

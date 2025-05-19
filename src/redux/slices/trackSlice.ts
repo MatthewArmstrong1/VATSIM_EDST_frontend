@@ -3,9 +3,10 @@ import { createSlice } from "@reduxjs/toolkit";
 import _ from "lodash";
 import type { AircraftId } from "types/aircraftId";
 import type { AircraftTrack } from "types/aircraftTrack";
+import type {EramTrackDto} from "types/apiTypes/EramTrackDto";
 import type { RootState } from "~redux/store";
 
-type TrackState = Record<AircraftId, AircraftTrack>;
+type TrackState = Record<AircraftId, EramTrackDto>;
 
 const initialState: TrackState = {};
 
@@ -13,11 +14,11 @@ const trackSlice = createSlice({
   name: "track",
   initialState,
   reducers: {
-    setTrack(state, action: PayloadAction<AircraftTrack>) {
+    setTrack(state, action: PayloadAction<EramTrackDto>) {
       console.log("setTrack", action.payload);
       state[action.payload.aircraftId] = action.payload;
     },
-    setTracks(state, action: PayloadAction<Record<AircraftId, AircraftTrack>>) {
+    setTracks(state, action: PayloadAction<Record<AircraftId, EramTrackDto>>) {
       _.assign(state, action.payload);
     },
   },

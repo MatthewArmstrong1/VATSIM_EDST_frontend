@@ -58,8 +58,7 @@ export const GpdAircraftTrack = ({ aircraftId, toggleRouteLine }: GpdAircraftTra
 
   const iconPos = track ? projection([+track.location.lon, +track.location.lat]) : null;
 
-  console.log(useRootSelector((state) => aircraftTracksSelector(state)));
-  console.log(track);
+  console.log(entry)
 
   return iconPos ? (
     <div

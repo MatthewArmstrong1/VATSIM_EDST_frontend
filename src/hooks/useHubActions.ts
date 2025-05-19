@@ -50,8 +50,14 @@ export const useHubActions = () => {
 
   const amendFlightplan = async (fp: CreateOrAmendFlightplanDto) => {
 
-    if (!checkSessionActive()) {
-      return
+    if (!hubConnection) {
+      console.log("Hub connection is not available");
+      return;
+    }
+
+    if (hubConnection.state !== HubConnectionState.Connected) {
+      console.log("Reconnecting hub connection before sending ERAM message");
+      await connectHub(); // Wait for connection to complete
     }
 
     hubConnection?.invoke<void>("amendFlightPlan", fp).catch((e) => {
