@@ -48,6 +48,7 @@ import mcaStyles from "css/mca.module.scss";
 import clsx from "clsx";
 import { ConsoleLogger } from "@microsoft/signalr/src/Utils";
 import { EramMessageElement, EramPositionType, ProcessEramMessageDto } from "~/types/apiTypes/ProcessEramMessageDto";
+import { useMetar } from "~/api/weatherApi";
 
 function chunkString(str: string, length: number) {
   return str.match(new RegExp(`.{1,${length}}`, "g")) ?? [""];
@@ -95,7 +96,7 @@ export const MessageComposeArea = () => {
   const zIndex = zStack.indexOf("MESSAGE_COMPOSE_AREA");
 
   const accept = (message: string) => {
-    dispatch(setMcaAcceptMessage(message));
+    dispatch(setMcaAcceptMessage(`ACCEPT ${message}`));
   };
 
   const acceptDposKeyBD = () => {
@@ -103,7 +104,7 @@ export const MessageComposeArea = () => {
   };
 
   const reject = (message: string) => {
-    dispatch(setMcaRejectMessage(message));
+    dispatch(setMcaRejectMessage(`REJECT ${message}`));
   };
 
   const toggleHighlightEntry = (fid: string) => {
@@ -127,13 +128,14 @@ export const MessageComposeArea = () => {
   };
 
   const parseUU = (args: string[]) => {
+    const UUParam = args[0];
     switch (args.length) {
       case 0:
         dispatch(openWindowThunk("ACL"));
         acceptDposKeyBD();
         break;
       case 1:
-        switch (args[0]) {
+        switch (UUParam) {
           case "C":
             dispatch(aclCleanup);
             break;
@@ -160,10 +162,10 @@ export const MessageComposeArea = () => {
             dispatch(closeAllWindows());
             break;
           default:
-            if (isAclSortKey(args[0])) {
+            if (isAclSortKey(UUParam)) {
               if (!SORT_KEYS_NOT_IMPLEMENTED.includes(args[0])) {
                 dispatch(openWindowThunk("ACL"));
-                dispatch(setAclSort(args[0]));
+                dispatch(setAclSort(UUParam));
               }
             } else {
               dispatch(addAclEntryByFid(args[0]));
@@ -173,7 +175,7 @@ export const MessageComposeArea = () => {
         acceptDposKeyBD();
         break;
       case 2:
-        if (args[0] === "H") {
+        if (UUParam === "H") {
           toggleHighlightEntry(args[1]);
           acceptDposKeyBD();
         } else {
@@ -197,6 +199,57 @@ export const MessageComposeArea = () => {
     socket.sendGIMessage(recipient, message, callback);
   };
 
+  const handleEramMessage = async (command: string, args: string[]): Promise<void> => {
+    const elements: EramMessageElement[] = [{ token: command }];
+    args.forEach((arg) => {
+      elements.push({ token: arg });
+    });
+
+    const eramMessage: ProcessEramMessageDto = {
+      source: EramPositionType.DSide,
+      elements,
+      invertNumericKeypad: false,
+    };
+
+    try {
+      const result = await hubActions.sendEramMessage(eramMessage);
+      if (result) {
+        if (result.isSuccess) {
+          // If successful, accept the command with feedback
+          const feedbackMessage = result.feedback.length > 0 ? result.feedback.join("\n") : mcaInputValue;
+          dispatch(setMcaAcceptMessage(feedbackMessage));
+
+          if (result.response) {
+            dispatch(setMraMessage(result.response));
+            dispatch(openWindowThunk("MESSAGE_RESPONSE_AREA"));
+          }
+        } else {
+          const rejectMessage = result?.feedback?.length > 0 ? `REJECT\n${result.feedback.join("\n")}` : `REJECT\n${mcaInputValue}`;
+          dispatch(setMcaRejectMessage(rejectMessage));
+        }
+      }
+    } catch (error) {
+      reject(`\n${error?.message || "Command failed"}`);
+    }
+  };
+
+  const handleWeatherRequest = async (args: string[], input: string) => {
+    if (args.length !== 1) {
+      reject(`FORMAT\n${input}`);
+      return;
+    }
+
+    // Handle normal WR {APT} format
+    dispatch(openWindowThunk("METAR"));
+    const result = await dispatch(toggleMetar(args));
+
+    if (toggleMetar.rejected.match(result)) {
+      reject(`${result.payload ?? result.error.message}`);
+    } else {
+      accept(`WEATHER STAT REQ\n${input}`);
+    }
+  };
+
   const parseCommand = async (input: string) => {
     // TODO: rename command variable
     const [command, ...args] = input
@@ -204,18 +257,14 @@ export const MessageComposeArea = () => {
       .split(/\s+/)
       .map((s) => s.toUpperCase());
 
-    let match;
+    let giParamMatch;
     switch (command) {
-      case "SI":
-        accept("SIGN IN")
-        break;
-      case "SO":
-        accept("SIGN OUT")
-        break;
       case "GI": // send GI message
-        match = GI_EXPR.exec(input.toUpperCase());
-        if (match?.length === 3) {
-          parseGI(match[1], match[2]);
+        giParamMatch = GI_EXPR.exec(input.toUpperCase());
+        if (giParamMatch?.length === 3) {
+          const recipient = giParamMatch[1];
+          const message = giParamMatch[2];
+          parseGI(recipient, message);
         } else {
           reject(`FORMAT\n${input}`);
         }
@@ -229,20 +278,7 @@ export const MessageComposeArea = () => {
         accept("ALTIMETER REQ");
         break; // end case QD
       case "WR": {
-        if (args.length !== 1) {
-          reject(`FORMAT\n${input}`);
-          return;
-        }
-
-        dispatch(openWindowThunk("METAR"));
-      
-        const result = await dispatch(toggleMetar(args));
-      
-        if (toggleMetar.rejected.match(result)) {
-          reject(`REJECT ${result.payload ?? result.error.message}`);
-        } else {
-          accept(`WEATHER STAT REQ\n${input}`);
-        }
+        await handleWeatherRequest(args, input);
         break;
       }
       case "SR":
@@ -252,53 +288,14 @@ export const MessageComposeArea = () => {
             printFlightStrip(entry);
             acceptDposKeyBD();
           } else {
-            reject(input);
+            reject(`\n${input}`);
           }
         } else {
-          reject(input);
+          reject(`\n${input}`);
         }
         break; // end case SR
       default:
-        // Construct ERAM message from command and args
-        const elements: EramMessageElement[] = [{ token: command }];
-        args.forEach((arg) => {
-          elements.push({ token: arg });
-        });
-
-        const eramMessage: ProcessEramMessageDto = {
-          source: EramPositionType.DSide,
-          elements,
-          invertNumericKeypad: false,
-        };
-
-        // Send the ERAM message using hubActions
-        hubActions.sendEramMessage(eramMessage)
-          .then((result) => {
-            if (result) {
-              if (result.isSuccess) {
-                // If successful, accept the command with feedback
-                const feedbackMessage = result.feedback.length > 0
-                  ? result.feedback.join('\n')
-                  : mcaInputValue;
-                dispatch(setMcaAcceptMessage(feedbackMessage));
-
-                // If there's a response, show it in the response area
-                if (result.response) {
-                  dispatch(setMraMessage(result.response));
-                  dispatch(openWindowThunk("MESSAGE_RESPONSE_AREA"));
-                }
-              } else {
-                // If not successful, reject with feedback
-                const rejectMessage = result?.feedback?.length > 0
-                  ? `REJECT\n${result.feedback.join('\n')}`
-                  : `REJECT\n${mcaInputValue}`;
-                dispatch(setMcaRejectMessage(rejectMessage));
-              }
-            }
-          })
-          .catch((error) => {
-            reject(`REJECT\n${error?.message || "Command failed"}`);
-          });
+        await handleEramMessage(command, args);
     }
   };
 
