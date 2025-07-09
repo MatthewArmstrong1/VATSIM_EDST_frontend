@@ -29,7 +29,7 @@ export const gpdApi = createApi({
         if (featureCollection) {
           return { data: featureCollection };
         } else {
-          // Return an empty FeatureCollection if not enabled
+          // Return an empty FeatureCollection if not enabled due to bad config
           return { data: { type: "FeatureCollection", features: [] } };
         }
       },
@@ -78,6 +78,63 @@ export const gpdApi = createApi({
           mapIds.push(...lowMaps);
         }
 
+        if (state.gpd.mapFeatureOptions["Ultra Low"]) {
+          const ultraLowMapsQuery = await fetch(`${baseUrl}/maps/sectors/ultraLow/${ARTCC}`);
+          const ultraLowMaps = await ultraLowMapsQuery.json();
+          mapIds.push(...ultraLowMaps);
+        }
+
+        if (state.gpd.mapFeatureOptions["Ultra High"]) {
+          const ultraHighMapsQuery = await fetch(`${baseUrl}/maps/sectors/ultraHigh/${ARTCC}`);
+          const ultraHighMaps = await ultraHighMapsQuery.json();
+          mapIds.push(...ultraHighMaps);
+        }
+
+        if (state.gpd.mapFeatureOptions.NAVAIDS) {
+          const navaidMapsQuery = await fetch(`${baseUrl}/maps/navaids/${ARTCC}`);
+          const navaidMaps = await navaidMapsQuery.json();
+          mapIds.push(...navaidMaps);
+        }
+
+        if (state.gpd.mapFeatureOptions.Airport) {
+          const airportMapsQuery = await fetch(`${baseUrl}/maps/airports/${ARTCC}`);
+          const airportMaps = await airportMapsQuery.json();
+          mapIds.push(...airportMaps);
+        }
+
+        const videoMapBaseURL = (getState() as any).auth.vnasConfiguration.videoMapBaseUrl;
+
+        const featurePromises = mapIds.map(async (mapId: string) => {
+          const featureQuery = await fetch(`${videoMapBaseURL}/${ARTCC}/${mapId}.geojson`);
+          if (!featureQuery.ok) {
+            throw new Error(`could not fetch map feature with ID ${mapId}`);
+          }
+          return featureQuery.json();
+        });
+
+        const returnData = await Promise.all(featurePromises);
+
+        return { data: returnData };
+      },
+    }),
+    getEnabledTextFeatures: builder.query<FeatureCollection[], string>({
+      queryFn: async (_, { getState }) => {
+        const state = getState() as any;
+        const ARTCC = state.auth.session.artccId;
+        const mapIds = [];
+
+        if (state.gpd.mapFeatureOptions["NAVAID Labels"]) {
+          const navaidLabelsMapsQuery = await fetch(`${baseUrl}/maps/navaidsText/${ARTCC}`);
+          const navaidLabelsMaps = await navaidLabelsMapsQuery.json();
+          mapIds.push(...navaidLabelsMaps);
+        }
+
+        if (state.gpd.mapFeatureOptions["Airport Labels"]) {
+          const airportLabelsMapsQuery = await fetch(`${baseUrl}/maps/airportLabels/${ARTCC}`);
+          const airportLabelsMaps = await airportLabelsMapsQuery.json();
+          mapIds.push(...airportLabelsMaps);
+        }
+
         const videoMapBaseURL = (getState() as any).auth.vnasConfiguration.videoMapBaseUrl;
 
         const featurePromises = mapIds.map(async (mapId: string) => {
@@ -122,7 +179,13 @@ export const gpdApi = createApi({
   }),
 });
 
-const { useGetArtccBoundariesQuery, useGetEnabledMapFeaturesQuery, useGetTraconMapsQuery, useGetEnabledWhiteLineFeaturesQuery } = gpdApi;
+const {
+  useGetArtccBoundariesQuery,
+  useGetEnabledMapFeaturesQuery,
+  useGetTraconMapsQuery,
+  useGetEnabledWhiteLineFeaturesQuery,
+  useGetEnabledTextFeaturesQuery,
+} = gpdApi;
 
 export const useArtccBoundaries = (optionsKey: string) => {
   return useGetArtccBoundariesQuery(optionsKey);
@@ -138,4 +201,8 @@ export const useTraconMaps = (optionsKey: string) => {
 
 export const useEnabledWhiteLines = (optionsKey: string) => {
   return useGetEnabledWhiteLineFeaturesQuery(optionsKey);
+};
+
+export const useEnabledTextLabels = (optionsKey: string) => {
+  return useGetEnabledTextFeaturesQuery(optionsKey);
 };

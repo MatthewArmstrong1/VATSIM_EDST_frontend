@@ -17,6 +17,7 @@ export function updateTrackThunk(target: EramTrackDto): RootThunkAction {
     if (aircraftIds.includes(target.aircraftId)) {
       // Create new LocalVEdstEntry with updated values
       const localData = new LocalVEdstEntry();
+      console.log(target.location)
 
       // Set VCI status if aircraft is on our frequency
       if (target.onFrequencySectorIds.includes(mySectorId)) {

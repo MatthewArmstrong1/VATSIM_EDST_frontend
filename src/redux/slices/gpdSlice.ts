@@ -1,6 +1,6 @@
 import type { PayloadAction } from "@reduxjs/toolkit";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import _ from "lodash";
+import _, { map } from "lodash";
 import type { Nullable } from "types/utility-types";
 import type { RootState } from "~redux/store";
 import sharedSocket from "~socket";
@@ -65,9 +65,8 @@ export type GpdState = {
 export type SharedGpdState = Omit<GpdState, "center" | "zoomLevel">;
 
 const initialMapFeatureOptionsState = {
-  [MapFeatureOption.lowSectors]: true,
-  [MapFeatureOption.highSectors]: true,
   [MapFeatureOption.centerBoundaries]: true,
+  [MapFeatureOption.highSectors]: true,
 };
 
 const initialState: GpdState = {

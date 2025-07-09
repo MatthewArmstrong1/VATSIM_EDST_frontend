@@ -147,9 +147,11 @@ export const TemplateMenu = () => {
         <div className={templateStyles.row}>
           {renderCol("RMK", "w5")}
           <div className={templateStyles.row} />
-          <div className={templateStyles.col}>
-            <EdstButton disabled content="Create FP..." />
-          </div>
+          {entry && (
+            <div className={templateStyles.col}>
+              <EdstButton disabled content="Create FP..." />
+            </div>
+          )}
         </div>
         <div className={templateStyles.row}>
           <TemplateTextArea value={rmkInput} onChange={(event) => setRmkInput(event.target.value)} rows={3} />

@@ -162,7 +162,7 @@ export const HubContextProvider = ({ children }: { children: ReactNode }) => {
       });
     });
     hubConnection.on("ReceiveEramTracks", async (topic: ApiTopic, targets: EramTrackDto[]) => {
-      console.log("received targets:", targets);
+      console.log("Track update")
       targets.forEach((t) => {
         dispatch(updateTrackThunk(t));
       });

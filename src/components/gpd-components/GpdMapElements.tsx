@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { useBoolean } from "usehooks-ts";
+import { useBoolean, useInterval } from "usehooks-ts";
 import type { Nullable } from "types/utility-types";
 import { entrySelector } from "~redux/slices/entrySlice";
-import { aircraftTrackSelector, aircraftTracksSelector } from "~redux/slices/trackSlice";
+import {
+  aircraftTrackSelector,
+  aircraftTracksSelector,
+} from "~redux/slices/trackSlice";
 import { useRouteFixes } from "api/aircraftApi";
 import { locationToPosition } from "~/utils/locationToPosition";
 import { getRemainingFixesFromPpos } from "~/utils/fixes";
@@ -16,7 +19,9 @@ import type { LineString, Position } from "@turf/turf";
 import type { AircraftId } from "types/aircraftId";
 import { E } from "@tauri-apps/api/path-e12e0e34";
 
-function createLineString<T extends { pos: Position }>(fixes: T[]): Feature<LineString> {
+function createLineString<T extends { pos: Position }>(
+  fixes: T[]
+): Feature<LineString> {
   return {
     type: "Feature",
     geometry: {
@@ -31,23 +36,37 @@ export type DataBlockOffset = { x: number; y: number };
 
 export const GpdRouteLine = ({ aircraftId }: { aircraftId: AircraftId }) => {
   const projection = useGpdContext();
-  const track = useRootSelector((state) => aircraftTrackSelector(state, aircraftId));
+  const track = useRootSelector((state) =>
+    aircraftTrackSelector(state, aircraftId)
+  );
   const routeFixes = useRouteFixes(aircraftId);
   const [routeLine, setRouteLine] = useState<Nullable<Feature>>(null);
 
   useEffect(() => {
     if (routeFixes && track) {
-      const remainingFixes = getRemainingFixesFromPpos(routeFixes, locationToPosition(track.location));
+      const remainingFixes = getRemainingFixesFromPpos(
+        routeFixes,
+        locationToPosition(track.location)
+      );
       if (remainingFixes && remainingFixes.length > 0) {
         setRouteLine(track ? createLineString(remainingFixes) : null);
       }
     }
   }, [routeFixes, track]);
 
-  return routeLine ? <path d={d3.geoPath(projection)(routeLine) ?? undefined} stroke={colors.green} fill="none" /> : null;
+  return routeLine ? (
+    <path
+      d={d3.geoPath(projection)(routeLine) ?? undefined}
+      stroke={colors.green}
+      fill="none"
+    />
+  ) : null;
 };
 
-type GpdAircraftTrackProps = { aircraftId: AircraftId; toggleRouteLine: (aircraftId: AircraftId) => void };
+type GpdAircraftTrackProps = {
+  aircraftId: AircraftId;
+  toggleRouteLine: (aircraftId: AircraftId) => void;
+};
 
 export const GpdAircraftTrack = ({ aircraftId, toggleRouteLine }: GpdAircraftTrackProps) => {
   const projection = useGpdContext();
@@ -55,10 +74,7 @@ export const GpdAircraftTrack = ({ aircraftId, toggleRouteLine }: GpdAircraftTra
   const track = useRootSelector((state) => aircraftTrackSelector(state, aircraftId));
   const { value: showDataBlock, toggle: toggleShowDataBlock } = useBoolean(true);
   const [datablockOffset, setDatablockOffset] = useState({ x: 24, y: -30 });
-
   const iconPos = track ? projection([+track.location.lon, +track.location.lat]) : null;
-
-  console.log(entry)
 
   return iconPos ? (
     <div
@@ -82,7 +98,11 @@ export const GpdAircraftTrack = ({ aircraftId, toggleRouteLine }: GpdAircraftTra
 };
 
 // TODO: give this component a better name...
-export const GpdPlanDisplay = ({ displayData }: { displayData: Record<string, unknown>[] }) => {
+export const GpdPlanDisplay = ({
+  displayData,
+}: {
+  displayData: Record<string, unknown>[];
+}) => {
   // TODO: implement component
 
   return <>{displayData.map(() => null)}</>;
