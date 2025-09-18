@@ -17,6 +17,7 @@ export function updateAircraftTrackThunk(newAircraftTrack: ApiAircraftTrack): Ro
         // const boundaryTime = computeBoundaryTime(entry, newAircraftTrack, polygons);
       }
     }
+    console.log("hi!")
     dispatch(updateEntries(updateData));
   };
 }

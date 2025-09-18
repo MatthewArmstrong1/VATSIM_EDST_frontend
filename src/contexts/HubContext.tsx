@@ -162,7 +162,7 @@ export const HubContextProvider = ({ children }: { children: ReactNode }) => {
       });
     });
     hubConnection.on("ReceiveEramTracks", async (topic: ApiTopic, targets: EramTrackDto[]) => {
-      console.log("received targets:", targets);
+      console.log("Track update")
       targets.forEach((t) => {
         dispatch(updateTrackThunk(t));
       });
@@ -175,9 +175,9 @@ export const HubContextProvider = ({ children }: { children: ReactNode }) => {
     });
     hubConnection.on("receiveAircraft", (aircraft: ApiAircraftTrack[]) => {
       console.log("received aircraft:", aircraft);
-      // aircraft.forEach(t => {
-      //   dispatch(updateAircraftTrackThunk(t));
-      // });
+      aircraft.forEach((t) => {
+        dispatch(updateAircraftTrackThunk(t));
+      });
     });
     hubConnection.on("handleFsdConnectionStateChanged", (state: boolean) => {
       dispatch(setFsdIsConnected(state));
@@ -229,9 +229,6 @@ export const HubContextProvider = ({ children }: { children: ReactNode }) => {
           const sessions = await hubConnection.invoke<ApiSessionInfoDto[]>("GetSessions");
           const primarySession = sessions?.find((s) => !s.isPseudoController);
           const eramConfig = primarySession?.positions.find((p) => p.isPrimary)?.position.eramConfiguration;
-
-          console.log(sessions);
-          console.log(primarySession);
 
           if (primarySession && eramConfig) {
             await hubConnection.invoke<void>("joinSession", {

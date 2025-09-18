@@ -46,6 +46,7 @@ export const AltMenu = () => {
       altitude: alt.toString().toUpperCase(),
     };
     if (selected === "amend") {
+      console.log(amendedFlightplan)
       void amendFlightplan(amendedFlightplan);
     } else {
       const trialPlanData: Plan = {

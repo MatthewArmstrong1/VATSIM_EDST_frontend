@@ -1,6 +1,7 @@
 import _ from "lodash";
 import type { RootThunkAction } from "~redux/store";
 import { updateEntry } from "~redux/slices/entrySlice";
+import { setTrack } from "~redux/slices/trackSlice";
 import { EramTrackDto } from "~/types/apiTypes/EramTrackDto";
 import { sectorIdSelector } from "~/redux/slices/sectorSlice";
 import { LocalVEdstEntry } from "types/localVEdstEntry";
@@ -16,11 +17,15 @@ export function updateTrackThunk(target: EramTrackDto): RootThunkAction {
     if (aircraftIds.includes(target.aircraftId)) {
       // Create new LocalVEdstEntry with updated values
       const localData = new LocalVEdstEntry();
+      console.log(target.location)
 
       // Set VCI status if aircraft is on our frequency
       if (target.onFrequencySectorIds.includes(mySectorId)) {
         localData.vciStatus = 1;
-      } else if (target.onFrequencySectorIds.length === 0 && localData.vciStatus === 1) {
+      } else if (
+        target.onFrequencySectorIds.length === 0 &&
+        localData.vciStatus === 1
+      ) {
         // If the aircraft is not on any frequency and we previously set VCI status to 1, set it to 0
         localData.vciStatus = 0;
       }
@@ -45,6 +50,9 @@ export function updateTrackThunk(target: EramTrackDto): RootThunkAction {
           },
         })
       );
+
+      // Update the aircraft track list
+      dispatch(setTrack(target));
     }
   };
 }
